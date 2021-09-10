@@ -6,14 +6,13 @@ class Settings {
 		Logger.Ok("Loading configuration settings.")
 		this.SettingsList = [
 			// Add settings items here
-			["coolDM", {
-				name: "Is the DM Cool?",
+			["activeDefenceChatName", {
+				name: "Text to display on def roll",
 				scope: "world", // or client
-				type: Boolean,
-				hint: "Really think about it... is the DM cool?",
+				type: String,
+				hint: "When an active defence roll is conducted, what text should be displayed in the chat window",
 				config: true, // It should appear in the configuration menu
-				default: false, // The DM is NOT cool by default
-				onChange: val => Logger.Ok("It has been deemed that the DM is " + (val ? "" : "NOT ") + "cool!"),
+				default: "Defence Roll",
 			}]
 		];
 	}
@@ -42,7 +41,15 @@ class Settings {
 		this.SettingsInit = true;
 	}
 
-	readonly SettingsList: ReadonlyArray<Pair<ClientSettings.PartialSetting>>;
+	public GetSetting(setting: string): unknown {
+		if (!this.SettingsInit)
+			this.RegisterSettings();
+
+		const g = game as Game;
+		return g.settings.get(Globals.ModuleName, setting);
+	}
+
+	private readonly SettingsList: ReadonlyArray<Pair<ClientSettings.PartialSetting>>;
 }
 
 export default Settings;
