@@ -2,7 +2,7 @@ import Logger from "./Utils/Logger";
 import Settings from "./Utils/Settings";
 
 import PreloadTemplates from "./PreloadTemplates";
-import AddActiveDefenceClick from "./ActiveDefence";
+import AddActiveDefenceClick, {ActiveDefenceClicked} from "./ActiveDefence";
 
 Hooks.once("init", async () => {
 	//CONFIG.debug.hooks = true;
@@ -11,13 +11,15 @@ Hooks.once("init", async () => {
 });
 
 Hooks.once("setup", () => {
-   Logger.Log("Template module is being setup.")
+   Logger.Log("Module is being setup.")
 });
 
 Hooks.once("ready", () => {
-   Logger.Ok("Template module is now ready.");
+	Logger.Ok("Module is now ready.");
+	// Assign activeDefence to contain this function on the global object
+	(game as any).activeDefence = ActiveDefenceClicked;
 });
 
-Hooks.on(`renderActorSheet`, (app: ActorSheet, html: JQuery, data: any) => {
-	AddActiveDefenceClick(app, html, data);
+Hooks.on(`renderActorSheet`, (app: ActorSheet, html: JQuery) => {
+	AddActiveDefenceClick(app, html);
 });

@@ -358,7 +358,8 @@ async function packageBuild() {
 			}
 
 			// Ensure there is a directory to hold all the packaged versions
-			fs.existsSync("package");
+			if(fs.existsSync("package"))
+				fs.mkdirSync("package");
 
 			// Initialize the zip file
 			const zipName = `${manifest.file.name}-v${manifest.file.version}.zip`;
@@ -377,14 +378,8 @@ async function packageBuild() {
 
 			zip.pipe(zipFile);
 
-
-
-			// Add the directory with the final code
-			zip.file("dist/module.json", { name: "module.json" });
-			zip.file("dist/bundle.js", { name: "bundle.js" });
-			zip.glob("dist/*.css", {});
-
-			zip.finalize();
+			zip.directory(path.join(process.cwd(), 'dist'), false);
+			return zip.finalize();
 		} catch (err) {
 			return reject(err);
 		}
@@ -514,10 +509,10 @@ const execGit = gulp.series(gitAdd, gitCommit, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildLess, copyFiles);
 
-exports.build = gulp.series(clean, execBuild, bundleModule, cleanDist);
+exports.build = gulp.series(clean, execBuild, bundleModule);
 exports.watch = buildWatch;
 exports.clean = clean;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;
-exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, cleanDist, packageBuild, execGit);
+exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, packageBuild, execGit);

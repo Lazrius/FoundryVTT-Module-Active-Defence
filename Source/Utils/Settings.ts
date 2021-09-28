@@ -1,19 +1,24 @@
 import Globals, {Assert, Pair} from "../Globals";
 import Logger from "./Logger";
 
+/*
+* */
+
 class Settings {
 	private constructor() {
 		Logger.Ok("Loading configuration settings.")
 		this.SettingsList = [
 			// Add settings items here
-			["activeDefenceChatName", {
-				name: "Text to display on def roll",
-				scope: "world", // or client
-				type: String,
-				hint: "When an active defence roll is conducted, what text should be displayed in the chat window",
-				config: true, // It should appear in the configuration menu
-				default: "Defence Roll",
-			}]
+			[
+				"activeDefenceChatName", {
+					name: "Text to display on def roll",
+					scope: "world", // or client
+					type: String,
+					hint: "When an active defence roll is conducted, what text should be displayed in the chat window",
+					config: true, // It should appear in the configuration menu
+					default: "Defence Roll",
+				}
+			]
 		];
 	}
 

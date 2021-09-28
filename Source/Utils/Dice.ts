@@ -1,0 +1,1 @@
+export const IsValidDiceStr = (str: string): boolean => /(\d*)(d\d*)((?:[+*-](?:\d+))*)(?:\+(d\d*))?/g.test(str);
