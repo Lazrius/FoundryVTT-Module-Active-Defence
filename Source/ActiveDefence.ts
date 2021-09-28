@@ -184,7 +184,6 @@ export const ActiveDefenceClicked = (app: ActorData, extraTitleText?: string): v
 	}
 
 	canvas.tokens.controlled.forEach(token => {
-		console.log(token);
 		game.activeDefence(token.actor.data, token.name);
 	});`
 
