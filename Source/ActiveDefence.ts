@@ -37,10 +37,11 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 
 	const roll1 = await new Roll(rollStr).roll({ async: true });
 
-	if (!roll1)
-	{
-		return;
-	}
+	let whisper: string[] | null = null;
+	if (rollMode === RollMode.Self)
+		whisper = [actor._id as string];
+	else if (rollMode === RollMode.BlindGMRoll || rollMode === RollMode.PrivateGMRoll)
+		whisper = g.users?.contents.filter(u => u.isGM).map(x => x._id as string) || null;
 
 	const dice1 = ((roll1.terms[0] as DiceTerm).results[0]).result as number;
 	const dice2 = ((roll1.terms[0] as DiceTerm).results[1]).result as number;
@@ -79,7 +80,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 					        <div class="dice-roll red-dual">
 					            <h3>${title}</h3>
 					            <div class="dice-result">
-					                <div class="dice-formula dice-tooltip" style="display: none;">1d20 + ${ac} ${modifier.length !== 0 ? "+" : ""} ${modifier}</div>
+					                <div class="dice-formula dice-tooltip" style="display: none;">${rollStr}</div>
 					                <div class="dice-row">
 					                    <div class="dice-row">
 					                        <div class="tooltip dual-left">
@@ -118,12 +119,6 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 	}
 	else
 		content = content.replace("%dice1%", "");
-
-	let whisper: string[] | undefined = undefined;
-	if (rollMode === RollMode.Self)
-		whisper = [actor._id as string];
-	else if (rollMode === RollMode.BlindGMRoll || rollMode === RollMode.PrivateGMRoll)
-		whisper = g.users?.contents.filter(u => u.isGM).map(x => x._id as string);
 
 
 	ChatMessage.create({
@@ -225,7 +220,7 @@ ${macroExists ? "" : `<button id='createMacroDialogButton' title='Create Macro' 
             <option value="selfroll">Self Roll</option>
             </optgroup>
         </select>
-	</div>				        
+	</div>
 </form>
 <script>$('#rollMode').val($('[name="rollMode"]').val())</script>`,
 		buttons: {
