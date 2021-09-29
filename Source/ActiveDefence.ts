@@ -18,7 +18,7 @@ enum RollMode
 	Self
 }
 
-const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType: RollType, rollMode: RollMode, modifier: string) => {
+const RollActiveDefence = async (ac: number, actor: ActorData, title: string, rollType: RollType, rollMode: RollMode, modifier: string) => {
 	const g = game as Game;
 
 	let rollStr = "2d20";
@@ -35,7 +35,7 @@ const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType
 	if (IsValidDiceStr(modifier))
 		rollStr += " + " + modifier;
 
-	const roll1 = new Roll(rollStr).roll();
+	const roll1 = await new Roll(rollStr).roll({ async: true });
 
 	if (!roll1)
 	{
@@ -102,7 +102,7 @@ const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType
 					                    </div>
 					                </div>
 					                <div class="dice-row">
-					                    <h4 class="dice-total dual-left" style="%dice1%;%dice1Adv%;text-shadow: 0 0 1px;">${endResult}</h4>
+					                    <h4 class="dice-total dual-left" style="%dice1%;text-shadow: 0 0 1px;">${endResult}</h4>
 					                </div>
 					            </div>
 					        </div>
@@ -110,10 +110,10 @@ const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType
 						</br>
 					</div>`;
 
-	if (dice1 === 1) {
+	if (goodDice === 1) {
 		content = content.replace("%dice1%", "color: red");
 	}
-	else if (dice1 === 20) {
+	else if (goodDice === 20) {
 		content = content.replace("%dice1%", "color: green");
 	}
 	else
@@ -125,6 +125,7 @@ const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType
 	else if (rollMode === RollMode.BlindGMRoll || rollMode === RollMode.PrivateGMRoll)
 		whisper = g.users?.contents.filter(u => u.isGM).map(x => x._id as string);
 
+
 	ChatMessage.create({
 		user: g.user?._id,
 		blind: rollMode === RollMode.BlindGMRoll,
@@ -135,7 +136,12 @@ const RollActiveDefence = (ac: number, actor: ActorData, title: string, rollType
 			alias: actor.name
 		},
 		sound: CONFIG.sounds.dice,
-		whisper: whisper
+		whisper: whisper,
+		type: CONST.CHAT_MESSAGE_TYPES.ROLL,
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		roll: roll1,
+		rollMode: rollMode,
 	});
 }
 
@@ -211,14 +217,17 @@ ${macroExists ? "" : `<button id='createMacroDialogButton' title='Create Macro' 
 	</div>
 	<div class='form-group'>
 	    <label>Roll Visibility</label>
-	    <select id='rollMode'>
-	        <option selected>Public Roll</option>
-	        <option>Private GM Roll</option>
-	        <option>Blind GM Roll</option>
-	        <option>Self</option>
-		</select>
+	    <select class="roll-type-select" id='rollMode'>
+            <optgroup label="Default Roll Mode">
+            <option value="roll" selected="">Public Roll</option>
+            <option value="gmroll">Private GM Roll</option>
+            <option value="blindroll">Blind GM Roll</option>
+            <option value="selfroll">Self Roll</option>
+            </optgroup>
+        </select>
 	</div>				        
-</form>`,
+</form>
+<script>$('#rollMode').val($('[name="rollMode"]').val())</script>`,
 		buttons: {
 			one: {
 				label: "Advantage",
