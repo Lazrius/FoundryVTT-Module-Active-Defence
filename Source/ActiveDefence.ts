@@ -73,7 +73,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 				badDice = dice1Higher ? dice2 : dice1;
 				break;
 			case RollType.Disadvantage:
-				endResult = total1 <= total2 ? total1 : total1;
+				endResult = total1 <= total2 ? total1 : total2;
 				goodDice = dice1Higher ? dice2 : dice1;
 				badDice = dice1Higher ? dice1 : dice2;
 				break;
@@ -85,8 +85,6 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 		goodDice = dice1;
 		//badDice = dice2;
 	}
-
-
 
 	let img = actor.token.img;
 	if (actor.token.img === null || actor.token.img.includes('*'))
