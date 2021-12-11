@@ -11,11 +11,11 @@ const source = require('vinyl-source-stream');
 
 const loadJson = (path: string): any => {
 	try {
-		const str = fs.readFileSync(path).toString();
+		let str = fs.readFileSync(path).toString();
 		return JSON.parse(str);
 	}
 	catch {
-		throw Error("Unable to load module.json")
+		throw Error("Unable to load " + path);
 	}
 };
 
@@ -120,10 +120,10 @@ const createTransformer = (): TransformerFactory<any> => {
 				if (shouldMutateModuleSpecifier(node)) {
 					if (isImportDeclaration(node)) {
 						const newModuleSpecifier = createLiteral(`${(node.moduleSpecifier as LiteralExpression).text}.js`);
-						return factory.updateImportDeclaration(node, node.decorators, node.modifiers, node.importClause, newModuleSpecifier);
+						return factory.updateImportDeclaration(node, node.decorators, node.modifiers, node.importClause, newModuleSpecifier, undefined);
 					} else if (isExportDeclaration(node)) {
 						const newModuleSpecifier = createLiteral(`${(node.moduleSpecifier as LiteralExpression).text}.js`);
-						return factory.updateExportDeclaration(node, node.decorators, node.modifiers, false, node.exportClause, newModuleSpecifier);
+						return factory.updateExportDeclaration(node, node.decorators, node.modifiers, false, node.exportClause, newModuleSpecifier, undefined);
 					}
 				}
 				return visitEachChild(node, visitor, context);

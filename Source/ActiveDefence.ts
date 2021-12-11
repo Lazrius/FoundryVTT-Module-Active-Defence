@@ -21,13 +21,20 @@ enum RollMode
 const RollActiveDefence = async (ac: number, actor: ActorData, title: string, rollType: RollType, rollMode: RollMode, modifier: string) => {
 	const g = game as Game;
 
-	let rollStr = "2d20";
+	let rollStr = "d20";
+	let isOne = false;
 
 	switch (rollType) {
+		case RollType.Normal:
+			rollStr = "1" + rollStr;
+			isOne = true;
+			break;
 		case RollType.Advantage:
+			rollStr = "2" + rollStr;
 			rollStr += "kh";
 			break;
 		case RollType.Disadvantage:
+			rollStr = "2" + rollStr;
 			rollStr += "kl";
 			break;
 	}
@@ -44,39 +51,51 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 		whisper = g.users?.contents.filter(u => u.isGM).map(x => x._id as string) || null;
 
 	const dice1 = ((roll1.terms[0] as DiceTerm).results[0]).result as number;
-	const dice2 = ((roll1.terms[0] as DiceTerm).results[1]).result as number;
 
 	const total1 = dice1 + ac;
-	const total2 = dice2 + ac;
 
-	const dice1Higher = dice1 >= dice2;
-
-	// There has to be a better way to filter these dice
 	let goodDice = 0;
 	let badDice = 0;
 	let endResult = 0;
-	switch (rollType) {
-		case RollType.Advantage:
-			endResult = total1 >= total2 ? total1 : total2;
-			goodDice = dice1Higher ? dice1 : dice2;
-			badDice = dice1Higher ? dice2 : dice1;
-			break;
-		case RollType.Disadvantage:
-			endResult = total1 <= total2 ? total1 : total1;
-			goodDice = dice1Higher ? dice2 : dice1;
-			badDice = dice1Higher ? dice1 : dice2;
-			break;
-		case RollType.Normal:
-			endResult = total1;
-			goodDice = dice1;
-			badDice = dice2;
-			break;
+
+	if (!isOne)
+	{
+		const dice2 = ((roll1.terms[0] as DiceTerm).results[1]).result as number;
+		const total2 = dice2 + ac;
+
+		const dice1Higher = dice1 >= dice2;
+
+		// There has to be a better way to filter these dice
+		switch (rollType) {
+			case RollType.Advantage:
+				endResult = total1 >= total2 ? total1 : total2;
+				goodDice = dice1Higher ? dice1 : dice2;
+				badDice = dice1Higher ? dice2 : dice1;
+				break;
+			case RollType.Disadvantage:
+				endResult = total1 <= total2 ? total1 : total1;
+				goodDice = dice1Higher ? dice2 : dice1;
+				badDice = dice1Higher ? dice1 : dice2;
+				break;
+		}
 	}
+	else
+	{
+		endResult = total1;
+		goodDice = dice1;
+		//badDice = dice2;
+	}
+
+
+
+	let img = actor.token.img;
+	if (actor.token.img === null || actor.token.img.includes('*'))
+		img = actor.img;
 
 	let content = `
 					<div class="dnd5e chat-card item-card" data-acor-id="${actor._id}">
 					    <header class="card-header flexrow">
-					        <img alt='Avatar' src="${actor.token.img}" title="" width="36" height="36" style="border: none;" />
+					        <img alt='Avatar' src="${img}" title="" width="36" height="36" style="border: none;" />
 					        <div class="dice-roll red-dual">
 					            <h3>${title}</h3>
 					            <div class="dice-result">
@@ -94,7 +113,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 												            </header>
 												            <ol class="dice-rolls">
 												                <li class="roll die d20">${goodDice}</li>
-												                <li class="roll die d20 discarded">${badDice}</li>
+												                ${badDice !== 0 ? '<li class="roll die d20 discarded">' + badDice + '</li>' : ''}
 												            </ol>
 												        </div>
 												    </section>
