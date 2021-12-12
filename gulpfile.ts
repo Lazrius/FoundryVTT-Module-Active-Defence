@@ -521,7 +521,9 @@ const gitTag = (cb: gulp.TaskFunctionCallback) => {
 	return cb();
 };
 
-const execGit = gulp.series(gitBranch, gitAdd, gitCommit, gitTag);
+// We need to update the manifest before branching off
+const execGitManifest = gulp.series(gitAdd, gitCommit);
+const execGit = gulp.series(gitBranch, execGitManifest, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildLess, copyFiles);
 
@@ -531,4 +533,4 @@ exports.clean = clean;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;
-exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, packageBuild, execGit);
+exports.publish = gulp.series(clean, updateManifest, execGitManifest, execBuild, bundleModule, packageBuild, execGit);
