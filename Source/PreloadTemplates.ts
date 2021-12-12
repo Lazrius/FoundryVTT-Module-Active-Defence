@@ -7,6 +7,6 @@ const PreloadTemplates = async (): Promise<Handlebars.TemplateDelegate<any>[]> =
 	// This would map to our local folder of /Assets/Templates/Actor/actor-sheet.hbs
 	const templates: Array<string> = [];
 	return loadTemplates(templates);
-}
+};
 
 export default PreloadTemplates;

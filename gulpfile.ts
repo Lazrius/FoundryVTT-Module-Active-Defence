@@ -476,7 +476,7 @@ const updateManifest = (cb: any) => {
 }
 
 const gitAdd = () => {
-	return gulp.src("dist").pipe(git.add({ args: "--no-all" }));
+	return gulp.src("dist").pipe(git.add({ args: "--no-all -f" }));
 }
 
 const gitCommit = () => {
