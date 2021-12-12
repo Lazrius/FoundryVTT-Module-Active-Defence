@@ -475,14 +475,24 @@ const updateManifest = (cb: any) => {
 	}
 }
 
+const gitBranch = () => {
+	const manifest = getManifest();
+	if (manifest === null) {
+		throw Error("Could not load manifest.");
+	}
+
+	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error) => {
+		throw err;
+	});
+};
+
 const gitAdd = () => {
-	return gulp.src("dist").pipe(git.add({ args: "--no-all" }));
+	return gulp.src("dist").pipe(git.add({ args: "--no-all -f" }));
 }
 
 const gitCommit = () => {
 	const manifest = getManifest();
-	if (manifest === null)
-	{
+	if (manifest === null) {
 		throw Error("Could not load manifest.");
 	}
 
@@ -506,7 +516,7 @@ const gitTag = () => {
 	});
 }
 
-const execGit = gulp.series(gitAdd, gitCommit, gitTag);
+const execGit = gulp.series(gitBranch, gitAdd, gitCommit, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildLess, copyFiles);
 
