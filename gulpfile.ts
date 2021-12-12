@@ -348,17 +348,17 @@ async function packageBuild() {
 			// Remove the package dir without doing anything else
 			if (argv.clean || argv.c) {
 				Logger.Warn("Removing all packaged files");
-				fs.rmSync("package", { force: true, recursive: true });
+				fs.rmSync("dist", { force: true, recursive: true });
 				return;
 			}
 
 			// Ensure there is a directory to hold all the packaged versions
-			if(fs.existsSync("package"))
-				fs.mkdirSync("package");
+			if(!fs.existsSync("dist"))
+				fs.mkdirSync("dist");
 
 			// Initialize the zip file
 			const zipName = `${manifest.file.name}-v${manifest.file.version}.zip`;
-			const zipFile = fs.createWriteStream(path.join("package", zipName));
+			const zipFile = fs.createWriteStream(path.join("dist", zipName));
 			const zip = archiver("zip", { zlib: { level: 9 } });
 
 			zipFile.on("close", () => {
@@ -450,7 +450,7 @@ const updateManifest = (cb: any) => {
 
 		/* Update URLs */
 
-		const result = `${rawURL}/v${manifest.file.version}/package/${manifest.file.name}-v${manifest.file.version}.zip`;
+		const result = `${rawURL}/v${manifest.file.version}/dist/${manifest.file.name}-v${manifest.file.version}.zip`;
 
 		manifest.file.url = repoURL;
 		manifest.file.manifest = `${rawURL}/master/${manifestRoot}/${manifest.name}`;
@@ -476,7 +476,7 @@ const gitBranch = (cb: gulp.TaskFunctionCallback) => {
 		return cb(Error("Could not load manifest."));
 	}
 
-	const r = git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
+	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
 		if (err)
 			return cb(err);
 
@@ -486,7 +486,11 @@ const gitBranch = (cb: gulp.TaskFunctionCallback) => {
 };
 
 const gitAdd = (cb: gulp.TaskFunctionCallback) => {
-	gulp.src("dist").pipe(git.add({ args: "--no-all -f" }));
+	const manifest = getManifest();
+	if (!manifest)
+		return cb(Error("could not load manifest."));
+
+	gulp.src(`dist/${manifest.file.name}-v${manifest.file.version}.zip`).pipe(git.add({ args: "--no-all -f" }));
 	return cb();
 }
 
@@ -533,4 +537,4 @@ exports.clean = clean;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;
-exports.publish = gulp.series(clean, updateManifest, execGitManifest, execBuild, bundleModule, packageBuild, execGit);
+exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, packageBuild, execGit);
