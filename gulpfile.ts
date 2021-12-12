@@ -90,10 +90,6 @@ const getManifest = (): Manifest | null => {
 		return null;
 	}
 
-	// If we can pull our version from our package - saves us having to maintain the number in different places
-	if (process.env.npm_package_version)
-		json.file!.version = process.env.npm_package_version;
-
 	return json;
 }
 
@@ -342,8 +338,7 @@ const linkUserData = async () => {
  */
 async function packageBuild() {
 	const manifest = getManifest();
-	if (manifest === null)
-	{
+	if (manifest === null) {
 		Logger.Err("Manifest file could not be loaded.");
 		throw Error();
 	}
@@ -481,8 +476,9 @@ const gitBranch = () => {
 		throw Error("Could not load manifest.");
 	}
 
-	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error) => {
-		throw err;
+	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
+		if (err)
+			throw err;
 	});
 };
 
