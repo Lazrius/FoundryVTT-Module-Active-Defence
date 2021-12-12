@@ -297,7 +297,6 @@ const clean = async () => {
 
 const linkUserData = async () => {
 	const name = getManifest()!.file.name;
-	const config = loadJson("foundryconfig.json");
 
 	let destDir;
 	try {
@@ -310,13 +309,14 @@ const linkUserData = async () => {
 		}
 
 		let linkDir;
-		if (config.dataPath) {
-			if (!fs.existsSync(path.join(config.dataPath, "Data")))
+		const dataPath = process.env.FOUNDRY_PATH;
+		if (dataPath) {
+			if (!fs.existsSync(path.join(dataPath, "Data")))
 				throw Error("User Data path invalid, no Data directory found");
 
-			linkDir = path.join(config.dataPath, "Data", destDir, name as string);
+			linkDir = path.join(dataPath, "Data", destDir, name as string);
 		} else {
-			throw Error("No User Data path defined in foundryconfig.json");
+			throw Error("FOUNDRY_PATH defined in environment");
 		}
 
 		if (argv.clean || argv.c) {
@@ -476,7 +476,7 @@ const updateManifest = (cb: any) => {
 }
 
 const gitAdd = () => {
-	return gulp.src("package").pipe(git.add({ args: "--no-all" }));
+	return gulp.src("dist").pipe(git.add({ args: "--no-all" }));
 }
 
 const gitCommit = () => {
@@ -485,6 +485,7 @@ const gitCommit = () => {
 	{
 		throw Error("Could not load manifest.");
 	}
+
 	return gulp.src("./*").pipe(
 		git.commit(`v${manifest.file.version}`, {
 			args: "-a",
