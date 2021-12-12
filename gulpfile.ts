@@ -9,6 +9,8 @@ const uglify = require('gulp-uglify');
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
 
+const git = require('gulp-git-streamed');
+
 const loadJson = (path: string): any => {
 	try {
 		let str = fs.readFileSync(path).toString();
@@ -41,7 +43,6 @@ import browserify from "browserify";
 import tsify = require("tsify");
 
 const ts = require("gulp-typescript");
-const git = require("gulp-git");
 
 const argv = require("yargs").argv;
 
@@ -470,74 +471,26 @@ const updateManifest = (cb: any) => {
 	}
 }
 
-const gitBranch = (cb: gulp.TaskFunctionCallback) => {
-	const manifest = getManifest();
-	if (manifest === null) {
-		return cb(Error("Could not load manifest."));
-	}
-
-	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
-		if (err)
-			return cb(err);
-
-		return cb();
-	});
-	return cb();
-};
-
-const gitAddManifest = (cb: gulp.TaskFunctionCallback) => {
+const gitTaskManifest = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
 	if (!manifest)
 		return cb(Error("could not load manifest."));
 
-	gulp.src(`package.json`).pipe(git.add({ args: "--no-all -f" }));
-	gulp.src(`Source/module.json`).pipe(git.add({ args: "--no-all -f" }));
-	return cb();
+	return gulp.src([`package.json`, `Source/module.json`])
+		.pipe(git.add({ args: "--no-all -f" }))
+		.pipe(git.commit(`v${manifest.file.version}`, { args: "-a", disableAppendPaths: true }))
 }
 
-const gitAddBuild = (cb: gulp.TaskFunctionCallback) => {
+const gitTaskBuild = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
 	if (!manifest)
 		return cb(Error("could not load manifest."));
 
-	gulp.src(`dist/${manifest.file.name}-v${manifest.file.version}.zip`).pipe(git.add({ args: "--no-all -f" }));
-	return cb();
+	return gulp.src(`dist/${manifest.file.name}-v${manifest.file.version}.zip`)
+		.pipe(git.checkout(`v${manifest.file.version}`, { args: '-b' }))
+		.pipe(git.add({ args: "--no-all -f" }))
+		.pipe(git.commit(`v${manifest.file.version}`, { args: "-a", disableAppendPaths: true }))
 }
-
-const gitCommit = (cb: gulp.TaskFunctionCallback) => {
-	const manifest = getManifest();
-	if (manifest === null) {
-		return cb(Error("Could not load manifest."));
-	}
-
-	gulp.src("./*").pipe(
-		git.commit(`v${manifest.file.version}`, {
-			args: "-a",
-			disableAppendPaths: true,
-		})
-	);
-
-	return cb();
-}
-
-const gitTag = (cb: gulp.TaskFunctionCallback) => {
-	const manifest = getManifest();
-	if (manifest === null) {
-		return cb(Error("Could not load manifest."));
-	}
-	const r = git.tag(`v${manifest.file.version}`, `Updated to ${manifest.file.version}`, (err: Error | undefined) => {
-		if (err)
-			return cb(err);
-
-		return cb();
-	});
-
-	return cb();
-};
-
-// We need to update the manifest before branching off
-const execGitManifest = gulp.series(gitAddManifest, gitCommit);
-const execGitBuild = gulp.series(gitBranch, gitAddBuild, gitCommit, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildLess, copyFiles);
 
@@ -547,4 +500,4 @@ exports.clean = clean;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;
-exports.publish = gulp.series(clean, updateManifest, execGitManifest, execBuild, bundleModule, packageBuild, execGitBuild);
+exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, packageBuild, gitTaskManifest, gitTaskBuild);
