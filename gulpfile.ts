@@ -485,7 +485,17 @@ const gitBranch = (cb: gulp.TaskFunctionCallback) => {
 	return cb();
 };
 
-const gitAdd = (cb: gulp.TaskFunctionCallback) => {
+const gitAddManifest = (cb: gulp.TaskFunctionCallback) => {
+	const manifest = getManifest();
+	if (!manifest)
+		return cb(Error("could not load manifest."));
+
+	gulp.src(`package.json`).pipe(git.add({ args: "--no-all -f" }));
+	gulp.src(`Source/module.json`).pipe(git.add({ args: "--no-all -f" }));
+	return cb();
+}
+
+const gitAddBuild = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
 	if (!manifest)
 		return cb(Error("could not load manifest."));
@@ -526,8 +536,8 @@ const gitTag = (cb: gulp.TaskFunctionCallback) => {
 };
 
 // We need to update the manifest before branching off
-const execGitManifest = gulp.series(gitAdd, gitCommit);
-const execGit = gulp.series(gitBranch, execGitManifest, gitTag);
+const execGitManifest = gulp.series(gitAddManifest, gitCommit);
+const execGitBuild = gulp.series(gitBranch, gitAddBuild, gitCommit, gitTag);
 
 const execBuild = gulp.parallel(buildTS, buildLess, copyFiles);
 
@@ -537,4 +547,4 @@ exports.clean = clean;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;
-exports.publish = gulp.series(clean, updateManifest, execBuild, bundleModule, packageBuild, execGit);
+exports.publish = gulp.series(clean, updateManifest, execGitManifest, execBuild, bundleModule, packageBuild, execGitBuild);
