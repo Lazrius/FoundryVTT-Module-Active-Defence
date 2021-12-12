@@ -209,8 +209,11 @@ export const ActiveDefenceClicked = (app: ActorData, extraTitleText?: string): v
 	new Dialog({
 		title: title as string,
 		content: `
-${macroExists ? "" : `<button id='createMacroDialogButton' title='Create Macro' style='width: 30px; height: 30px; 
-			float: right;' type='button' onclick="(async () => {
+${macroExists ? "" : `<div class='form-group'>
+	<button id='createMacroDialogButton' title='Create Macro' 
+		style='height: 30px; background: rgba(0, 0, 0, 0.05); border: 2px groove #C9C7B8' 
+		type='button' 
+		onclick="(async () => {
 				await Macro.create({
 					name: 'Active Defence',
 					type: 'script',
@@ -220,9 +223,15 @@ ${macroExists ? "" : `<button id='createMacroDialogButton' title='Create Macro' 
 
 				document.getElementById('createMacroDialogButton').remove();
 				ui.notifications.info('Macro \\'Active Defence\\' created! Add it to your hotbar.');
-})()"><i class="fa fa-code"></i></button>`}
-<br/>
-<form>
+})()">
+	Generate Macro
+	</button><br/>
+</div>`}
+<form id='active-defense-form'>
+	<div class="form-group">
+        <label>Formula</label>
+        <input type="text" name="formula" value="1d20 + ${ac} + @bonus" disabled="">
+    </div>
 	<div class="form-group">
 	    <label>Situational Modifier</label>
 	    <input type='text' id='situationalRollModifier' placeholder='1d4+2'/>
@@ -231,15 +240,18 @@ ${macroExists ? "" : `<button id='createMacroDialogButton' title='Create Macro' 
 	    <label>Roll Visibility</label>
 	    <select class="roll-type-select" id='rollMode'>
             <optgroup label="Default Roll Mode">
-            <option value="roll" selected="">Public Roll</option>
-            <option value="gmroll">Private GM Roll</option>
-            <option value="blindroll">Blind GM Roll</option>
-            <option value="selfroll">Self Roll</option>
+	            <option value="roll" selected="">Public Roll</option>
+	            <option value="gmroll">Private GM Roll</option>
+	            <option value="blindroll">Blind GM Roll</option>
+	            <option value="selfroll">Self Roll</option>
             </optgroup>
         </select>
 	</div>
 </form>
-<script>$('#rollMode').val($('[name="rollMode"]').val())</script>`,
+<script>
+	$('#rollMode').val($('[name="rollMode"]').val());
+	$('#active-defense-form').parent().parent().css('overflow-y', 'hidden');
+</script>`,
 		buttons: {
 			one: {
 				label: "Advantage",
