@@ -466,51 +466,60 @@ const updateManifest = (cb: any) => {
 
 		return cb();
 	} catch (err) {
-		cb(err);
+		return cb(err);
 	}
 }
 
-const gitBranch = () => {
+const gitBranch = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
 	if (manifest === null) {
-		throw Error("Could not load manifest.");
+		return cb(Error("Could not load manifest."));
 	}
 
-	git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
+	const r = git.checkout(`v${manifest.file.version}`, { args: '-b' }, (err: Error | undefined) => {
 		if (err)
-			throw err;
+			return cb(err);
+
+		return cb();
 	});
+	return cb();
 };
 
-const gitAdd = () => {
-	return gulp.src("dist").pipe(git.add({ args: "--no-all -f" }));
+const gitAdd = (cb: gulp.TaskFunctionCallback) => {
+	gulp.src("dist").pipe(git.add({ args: "--no-all -f" }));
+	return cb();
 }
 
-const gitCommit = () => {
+const gitCommit = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
 	if (manifest === null) {
-		throw Error("Could not load manifest.");
+		return cb(Error("Could not load manifest."));
 	}
 
-	return gulp.src("./*").pipe(
+	gulp.src("./*").pipe(
 		git.commit(`v${manifest.file.version}`, {
 			args: "-a",
 			disableAppendPaths: true,
 		})
 	);
+
+	return cb();
 }
 
-const gitTag = () => {
+const gitTag = (cb: gulp.TaskFunctionCallback) => {
 	const manifest = getManifest();
-	if (manifest === null)
-	{
-		throw Error("Could not load manifest.");
+	if (manifest === null) {
+		return cb(Error("Could not load manifest."));
 	}
-	return git.tag(`v${manifest.file.version}`, `Updated to ${manifest.file.version}`, (err: Error | undefined) => {
+	const r = git.tag(`v${manifest.file.version}`, `Updated to ${manifest.file.version}`, (err: Error | undefined) => {
 		if (err)
-			throw err;
+			return cb(err);
+
+		return cb();
 	});
-}
+
+	return cb();
+};
 
 const execGit = gulp.series(gitBranch, gitAdd, gitCommit, gitTag);
 
