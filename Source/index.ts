@@ -38,7 +38,7 @@ Hooks.on('getSceneControlButtons', (buttons: SceneControl[]) => {
 				const g = game as Game;
 				const user = g.user as User;
 				if ((user.data as UserData).role === CONST.USER_ROLES.GAMEMASTER && g.modules.has("lmrtfy")) {
-					let content = `<div class="form-group" id='roll-selected-actors' style='display: flex'>`;
+					let content = `<div class="form-group" id='roll-selected-actors' style='display: flex; flex-flow: wrap;'>`;
 
 					const actors = g.actors as Actors;
 					actors.forEach(actor => {
@@ -64,7 +64,7 @@ Hooks.on('getSceneControlButtons', (buttons: SceneControl[]) => {
 					});
 
 					content += "</div>";
-					new Dialog({
+					const dialog = new Dialog({
 						title: "Who is rolling for defence?",
 						content: content,
 						buttons: {
@@ -120,7 +120,9 @@ Hooks.on('getSceneControlButtons', (buttons: SceneControl[]) => {
 							}
 						},
 						default: "one",
-					}).render(true);
+						render: () => $('#roll-selected-actors').parent().next().css('align-items', 'flex-end')
+					});
+					dialog.render(true, { width: 600, height: 300 });
 				} else {
 					if(!(canvas?.tokens?.controlled.length)) {
 						ui?.notifications?.warn('You need to select a token before using this.');
