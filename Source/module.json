@@ -7,7 +7,7 @@
 	"scripts": ["bundle.js"],
 	"languages": [],
 	"minimumCoreVersion": "0.8.8",
-	"compatibleCoreVersion": "0.8.8",
+	"compatibleCoreVersion": "9",
 	"url": "https://github.com/Lazrius/FoundryVTT-Module-Active-Defence",
 	"manifest": "https://raw.githubusercontent.com/Lazrius/FoundryVTT-Module-Active-Defence/master/Source/module.json",
 	"download": "https://raw.githubusercontent.com/Lazrius/FoundryVTT-Module-Active-Defence/v1.0.7/dist/foundryvtt-module-active-defence-v1.0.7.zip"
