@@ -1,7 +1,6 @@
 import Logger from "./Utils/Logger";
 import Settings from "./Utils/Settings"
 import {ActorData} from "@league-of-foundry-developers/foundry-vtt-types/src/foundry/common/data/data.mjs";
-import {IsValidDiceStr} from "./Utils/Dice";
 
 enum RollType
 {
@@ -18,7 +17,76 @@ enum RollMode
 	Self
 }
 
-const RollActiveDefence = async (ac: number, actor: ActorData, title: string, rollType: RollType, rollMode: RollMode, modifier: string) => {
+// Returns null if invalid, otherwise returns the string cleaned and ready to be inserted on the end of a dice roll
+const CleanDiceString = (str: string | null): string | null => {
+	if (str === null || str.length === 0)
+		return null;
+
+	const diceRegex = /^[+*-/]?\d+d\d+$/;
+	const numberRegex = /^[-*+/]?\d+$/;
+
+	// Remove the spaces to make this clean
+	const clean = str.replace(new RegExp(' ', 'g'), '');
+
+	// First lets see if they are single modifiers
+	if (numberRegex.test(clean) || diceRegex.test(clean)) {
+		if (isNaN(parseInt(clean[0])))
+			return str;
+
+		// If it's just a number/dice on its own, create a + symbol
+		return "+" + str;
+	}
+
+	const isSymbol = (symbol: string): boolean => {
+		switch (symbol) {
+			case '*':
+			case '/':
+			case '+':
+			case '-':
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	const params = clean.split(/([*+-/])/g);
+	if (params[0] === "")
+		params.shift();
+
+	let firstSymbol = false;
+	for (let index = 0; index < params.length; index++) {
+		const val = params[index];
+
+		if (index === 0 && isSymbol(val)) {
+			firstSymbol = true;
+		}
+
+		// this is disgusting and i hate it
+		const even = index % 2 === 0;
+		if (firstSymbol) {
+			if (even) {
+				if (!isSymbol(val)) {
+					return null;
+				}
+			} else if (!diceRegex.test(val) && !numberRegex.test(val)) {
+				return null;
+			}
+		} else {
+			if (even) {
+				if (!diceRegex.test(val) && !numberRegex.test(val)) {
+					return null;
+				}
+			} else if (!isSymbol(val)) {
+				return null;
+			}
+		}
+	}
+
+	// Return the original format or a modified string if it is missing a symbol
+	return isNaN(parseInt(clean[0])) ? str : " + " + str;
+}
+
+const RollActiveDefence = async (ac: number, actor: ActorData, title: string, rollType: RollType, rollMode: RollMode, modifier: string | null) => {
 	const g = game as Game;
 
 	let rollStr = "d20";
@@ -39,8 +107,9 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 			break;
 	}
 
-	if (IsValidDiceStr(modifier))
-		rollStr += " + " + modifier;
+	modifier = CleanDiceString(modifier);
+	if (modifier !== null)
+		rollStr += modifier;
 
 	const roll1 = await new Roll(rollStr).roll({ async: true });
 
@@ -169,10 +238,7 @@ export const ActiveDefenceClicked = (app: ActorData, extraTitleText?: string): v
 
 	const getSituationalModifier = (html: JQuery | HTMLElement): string => {
 		const result = (html as JQuery).find('#situationalRollModifier');
-		const val = result.val() as string;
-		if (IsValidDiceStr(val))
-			return val;
-		return "";
+		return result.val() as string;
 	}
 
 	const getRollMode = (html: JQuery | HTMLElement): RollMode => {
