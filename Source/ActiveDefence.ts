@@ -113,14 +113,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 	const dice = roll.terms[0] as DiceTerm;
 	const otherDice  = roll.terms.slice(1).filter((x: any) => x.faces !== undefined) as DiceTerm[];
 	const acceptedValue = (dice.results.find(x => !x.discarded)?.result ?? 0);
-
-	let situationalTotal = 0;
-	otherDice.forEach(x => x.results.forEach(r => {
-		if (!r.discarded)
-			situationalTotal += r.result;
-	}));
-
-	const total = acceptedValue + situationalTotal + ac;
+	const total = (roll.total ?? 0)  + ac;
 
 	const diceStr = `
 		<ol class="dice-rolls">
