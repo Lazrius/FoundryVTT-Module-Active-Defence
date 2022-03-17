@@ -2,7 +2,7 @@
 	"name": "foundryvtt-module-active-defence",
 	"title": "Lazrius' Active Defence",
 	"description": "A really simple module that makes your armour class clickable to roll for active defence.",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"author": "Laz#9427",
 	"scripts": ["bundle.js"],
 	"languages": [],
@@ -10,5 +10,5 @@
 	"compatibleCoreVersion": "9",
 	"url": "https://github.com/Lazrius/FoundryVTT-Module-Active-Defence",
 	"manifest": "https://raw.githubusercontent.com/Lazrius/FoundryVTT-Module-Active-Defence/master/Source/module.json",
-	"download": "https://raw.githubusercontent.com/Lazrius/FoundryVTT-Module-Active-Defence/v1.0.7/dist/foundryvtt-module-active-defence-v1.0.7.zip"
+	"download": "https://raw.githubusercontent.com/Lazrius/FoundryVTT-Module-Active-Defence/v1.0.8/dist/foundryvtt-module-active-defence-v1.0.8.zip"
 }
