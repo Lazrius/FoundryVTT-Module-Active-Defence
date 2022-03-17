@@ -90,12 +90,10 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 	const g = game as Game;
 
 	let rollStr = "d20";
-	let isOne = false;
 
 	switch (rollType) {
 		case RollType.Normal:
 			rollStr = "1" + rollStr;
-			isOne = true;
 			break;
 		case RollType.Advantage:
 			rollStr = "2" + rollStr;
@@ -111,49 +109,34 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 	if (modifier !== null)
 		rollStr += modifier;
 
-	const roll1 = await new Roll(rollStr).roll({ async: true });
+	const roll = await new Roll(rollStr).roll({ async: true });
+	const dice = roll.terms[0] as DiceTerm;
+	const otherDice  = roll.terms.slice(1).filter((x: any) => x.faces !== undefined) as DiceTerm[];
+	const acceptedValue = (dice.results.find(x => !x.discarded)?.result ?? 0);
+	const total = acceptedValue + ac;
 
-	let whisper: string[] | null = null;
-	if (rollMode === RollMode.Self)
-		whisper = [actor._id as string];
-	else if (rollMode === RollMode.BlindGMRoll || rollMode === RollMode.PrivateGMRoll)
-		whisper = g.users?.contents.filter(u => u.isGM).map(x => x._id as string) || null;
+	// Get individual dice counts
 
-	const dice1 = ((roll1.terms[0] as DiceTerm).results[0]).result as number;
+	const diceStr = `
+		<ol class="dice-rolls">
+			<li class="roll die d20 ${dice.results[0].discarded ? 'discarded' : ''}">${dice.results[0].result}</li>
+			${dice.results[1] !== undefined 
+				? '<li class="roll die d20 ' + 
+					(dice.results[1].discarded ? 'discarded' : '' + '">' + dice.results[1].result) + '</li>' 
+				: ''}
+		</ol>
+	`;
 
-	const total1 = dice1 + ac;
-
-	let goodDice = 0;
-	let badDice = 0;
-	let endResult = 0;
-
-	if (!isOne)
-	{
-		const dice2 = ((roll1.terms[0] as DiceTerm).results[1]).result as number;
-		const total2 = dice2 + ac;
-
-		const dice1Higher = dice1 >= dice2;
-
-		// There has to be a better way to filter these dice
-		switch (rollType) {
-			case RollType.Advantage:
-				endResult = total1 >= total2 ? total1 : total2;
-				goodDice = dice1Higher ? dice1 : dice2;
-				badDice = dice1Higher ? dice2 : dice1;
-				break;
-			case RollType.Disadvantage:
-				endResult = total1 <= total2 ? total1 : total2;
-				goodDice = dice1Higher ? dice2 : dice1;
-				badDice = dice1Higher ? dice1 : dice2;
-				break;
-		}
-	}
-	else
-	{
-		endResult = total1;
-		goodDice = dice1;
-		//badDice = dice2;
-	}
+	const conditionalDiceStr = otherDice.length !== 0 ? `
+		<header class="part-header flexrow"/>
+		<ol class="dice-rolls">
+			${otherDice.map((d) => {
+				return d.results.map(result => {
+					return `<li class="roll die d${d.faces}">${result.result}</li>`
+				}).join('');
+			}).join('')}
+		</ol>
+	` : ``;
 
 	let img = actor.token.img;
 	if (actor.token.img === null || actor.token.img.includes('*'))
@@ -176,12 +159,10 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 												            <header class="part-header flexrow">
 												                <span class="part-formula">${rollStr} + ${ac}</span>
 												                
-												                <span class="part-total">${dice1}</span>
+												                <span class="part-total">${acceptedValue}</span>
 												            </header>
-												            <ol class="dice-rolls">
-												                <li class="roll die d20">${goodDice}</li>
-												                ${badDice !== 0 ? '<li class="roll die d20 discarded">' + badDice + '</li>' : ''}
-												            </ol>
+												            ${diceStr}
+												            ${conditionalDiceStr}
 												        </div>
 												    </section>
 					                            </div>
@@ -189,7 +170,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 					                    </div>
 					                </div>
 					                <div class="dice-row">
-					                    <h4 class="dice-total dual-left" style="%dice1%;text-shadow: 0 0 1px;">${endResult}</h4>
+					                    <h4 class="dice-total dual-left" style="%dice1%;text-shadow: 0 0 1px;">${total}</h4>
 					                </div>
 					            </div>
 					        </div>
@@ -197,17 +178,22 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 						</br>
 					</div>`;
 
-	if (goodDice === 1) {
+	if (acceptedValue === 1) {
 		content = content.replace("%dice1%", "color: red");
 	}
-	else if (goodDice === 20) {
+	else if (acceptedValue === 20) {
 		content = content.replace("%dice1%", "color: green");
 	}
 	else
 		content = content.replace("%dice1%", "");
 
+	let whisper: string[] | null = null;
+	if (rollMode === RollMode.Self)
+		whisper = [actor._id as string];
+	else if (rollMode === RollMode.BlindGMRoll || rollMode === RollMode.PrivateGMRoll)
+		whisper = g.users?.contents.filter(u => u.isGM).map(x => x.id as string) || null;
 
-	ChatMessage.create({
+	await ChatMessage.create({
 		user: g.user?._id,
 		blind: rollMode === RollMode.BlindGMRoll,
 		content: content,
@@ -219,9 +205,7 @@ const RollActiveDefence = async (ac: number, actor: ActorData, title: string, ro
 		sound: CONFIG.sounds.dice,
 		whisper: whisper,
 		type: CONST.CHAT_MESSAGE_TYPES.ROLL,
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		roll: roll1,
+		roll: JSON.stringify(roll),
 		rollMode: rollMode,
 	});
 }
